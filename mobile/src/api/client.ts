@@ -36,6 +36,16 @@ export const API_BASE = resolveBaseUrl();
 
 export class ApiError extends Error {}
 
+/**
+ * ngrok's free tier serves a one-time HTML interstitial on browser-looking
+ * requests. A JSON client would receive that page instead of the API response
+ * and fail to parse it, so every request opts out. The header is ignored by
+ * backends reached any other way (LAN, Cloudflare, a deployed host).
+ */
+const BASE_HEADERS: Record<string, string> = {
+  'ngrok-skip-browser-warning': 'true',
+};
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${path}`;
   let response: Response;
@@ -43,14 +53,19 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
-    response = await fetch(url, { ...options, signal: controller.signal });
+    response = await fetch(url, {
+      ...options,
+      headers: { ...BASE_HEADERS, ...(options?.headers ?? {}) },
+      signal: controller.signal,
+    });
     clearTimeout(timer);
   } catch (err: any) {
     throw new ApiError(
       err?.name === 'AbortError'
         ? `Request timed out: ${url}`
         : `Cannot reach the CloudPulse backend at ${API_BASE}. ` +
-          `Make sure Flask is running and your phone is on the same Wi-Fi.`
+          `Check that the backend is running and, on a LAN address, that ` +
+          `this device is on the same network.`
     );
   }
 
