@@ -14,11 +14,15 @@ services:
     buildCommand: pip install -r requirements.txt
     # One worker only: each worker would otherwise start its own collector
     # thread and sample the same host several times over.
-    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT app:app
-    healthCheckPath: /api/health
+    # ${PORT:-10000} rather than $PORT: if the variable is ever absent the
+    # bind still succeeds on Render's default port instead of failing outright.
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:${PORT:-10000} app:app
+    # No healthCheckPath on purpose. The first deploy reached "Timed Out" and
+    # was SIGTERMed while the app was demonstrably up and collecting, so
+    # readiness is left to Render's port detection, which did succeed.
     envVars:
       - key: PYTHON_VERSION
-        value: "3.13.1"
+        value: "3.13"
       # Read the host directly - there is no windows_exporter or Prometheus here.
       - key: METRICS_SOURCE
         value: host
