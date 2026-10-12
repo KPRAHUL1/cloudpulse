@@ -8,6 +8,7 @@ the preprocessed samples CloudPulse actually analyses.
 from __future__ import annotations
 
 import logging
+from functools import wraps
 from typing import Any
 
 from pymongo import ASCENDING, DESCENDING, MongoClient
@@ -18,6 +19,28 @@ from config import Config
 log = logging.getLogger(__name__)
 
 _client: MongoClient | None = None
+
+# When MongoDB cannot be reached, init() installs services.sqlite_store here
+# and every public function below transparently delegates to it. This keeps
+# CloudPulse runnable with no database server (and so no Docker) while leaving
+# MongoDB as the default whenever it is available.
+_fallback: Any = None
+
+
+def backend_name() -> str:
+    return "sqlite" if _fallback is not None else "mongodb"
+
+
+def _delegating(fn):
+    """Route a call to the fallback store when one is active."""
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if _fallback is not None:
+            return getattr(_fallback, fn.__name__)(*args, **kwargs)
+        return fn(*args, **kwargs)
+
+    return wrapper
 
 # Collection names
 METRICS = "metrics_history"
@@ -38,7 +61,19 @@ def get_db():
 
 
 def init() -> None:
-    """Create indexes and seed default alert thresholds. Idempotent."""
+    """Create indexes and seed defaults, or fall back to the local store."""
+    global _fallback
+    try:
+        get_client().admin.command("ping")
+    except PyMongoError as exc:
+        from services import sqlite_store
+
+        log.warning("MongoDB unavailable (%s) - using local SQLite store instead", exc)
+        _fallback = sqlite_store
+        sqlite_store.init()
+        return
+
+    _fallback = None
     db = get_db()
     db[METRICS].create_index([("ts", DESCENDING)])
     db[ALERTS].create_index([("ts", DESCENDING)])
@@ -56,7 +91,10 @@ def init() -> None:
 
 def ping() -> dict[str, Any]:
     """Diagnostics for /api/health."""
-    info: dict[str, Any] = {"uri": Config.MONGO_URI, "connected": False}
+    if _fallback is not None:
+        return _fallback.ping()
+    info: dict[str, Any] = {"backend": "mongodb", "uri": Config.MONGO_URI,
+                            "connected": False}
     try:
         get_client().admin.command("ping")
         info["connected"] = True
@@ -72,6 +110,7 @@ def ping() -> dict[str, Any]:
 # ---------------------------------------------------------------------- #
 # Metrics history
 # ---------------------------------------------------------------------- #
+@_delegating
 def insert_samples(samples: list[dict]) -> int:
     if not samples:
         return 0
@@ -79,6 +118,7 @@ def insert_samples(samples: list[dict]) -> int:
     return len(res.inserted_ids)
 
 
+@_delegating
 def recent_samples(limit: int, projection: dict | None = None) -> list[dict]:
     """Most recent N samples, returned oldest-first (chronological)."""
     cursor = (get_db()[METRICS]
@@ -88,6 +128,7 @@ def recent_samples(limit: int, projection: dict | None = None) -> list[dict]:
     return list(cursor)[::-1]
 
 
+@_delegating
 def samples_since(ts_epoch: float) -> list[dict]:
     cursor = (get_db()[METRICS]
               .find({"ts": {"$gte": ts_epoch}}, {"_id": 0})
@@ -95,10 +136,12 @@ def samples_since(ts_epoch: float) -> list[dict]:
     return list(cursor)
 
 
+@_delegating
 def sample_count() -> int:
     return get_db()[METRICS].count_documents({})
 
 
+@_delegating
 def latest_sample() -> dict | None:
     return get_db()[METRICS].find_one({}, {"_id": 0}, sort=[("ts", DESCENDING)])
 
@@ -106,17 +149,20 @@ def latest_sample() -> dict | None:
 # ---------------------------------------------------------------------- #
 # Alerts + thresholds
 # ---------------------------------------------------------------------- #
+@_delegating
 def get_thresholds() -> dict:
     doc = get_db()[ALERT_CONFIG].find_one({"_id": "thresholds"})
     return (doc or {}).get("values", Config.DEFAULT_THRESHOLDS)
 
 
+@_delegating
 def save_thresholds(values: dict) -> None:
     get_db()[ALERT_CONFIG].update_one(
         {"_id": "thresholds"}, {"$set": {"values": values}}, upsert=True
     )
 
 
+@_delegating
 def insert_alerts(alerts: list[dict]) -> int:
     if not alerts:
         return 0
@@ -124,6 +170,7 @@ def insert_alerts(alerts: list[dict]) -> int:
     return len(res.inserted_ids)
 
 
+@_delegating
 def recent_alerts(limit: int = 50, severity: str | None = None) -> list[dict]:
     query = {"severity": severity} if severity else {}
     cursor = (get_db()[ALERTS]
@@ -133,6 +180,7 @@ def recent_alerts(limit: int = 50, severity: str | None = None) -> list[dict]:
     return list(cursor)
 
 
+@_delegating
 def last_alert_ts(metric: str, severity: str) -> float | None:
     doc = get_db()[ALERTS].find_one(
         {"metric": metric, "severity": severity},
@@ -145,6 +193,7 @@ def last_alert_ts(metric: str, severity: str) -> float | None:
 # ---------------------------------------------------------------------- #
 # ML result snapshots
 # ---------------------------------------------------------------------- #
+@_delegating
 def save_ml_result(kind: str, payload: dict) -> None:
     doc = {"kind": kind, **payload}
     get_db()[ML_RESULTS].insert_one(doc)

@@ -257,16 +257,37 @@ Restart with `docker start cloudpulse-mongo`.
 
 ---
 
+## Automated coverage
+
+Everything that does not need a running host stack is covered by pytest, so it
+does not have to be re-checked by hand:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m pytest tests -q     # 30 tests
+```
+
 ## Summary checklist
+
+Verified on the **zero-infrastructure** path (psutil + SQLite, Docker stopped):
+
+- [x] `/api/health` -> healthy, data_source real-time
+- [x] Live metrics match the OS - memory and disk matched Win32 WMI exactly
+      (78.7% / 70.1%); CPU tracked a 12-core load test 6.6% -> 100.0% -> 33.9%
+- [x] Samples accumulating in the store (SQLite; MongoDB on the full stack)
+- [x] K-Means returns Low / Medium / High with ordered centroids
+      (6.7 / 10.5 / 96.5% CPU, silhouette 0.52) - also asserted in tests
+- [x] Linear Regression returns clamped predictions with R2 - asserted in tests
+- [x] Threshold alert fires, and cooldown suppresses duplicates - a real
+      98.3% CPU critical fired, and ~9 further breaching samples during a 90s
+      load produced no duplicate
+- [x] `threshold.py` imports nothing from `ml/` - asserted in tests
+- [x] All four app tabs render live data
+- [x] System degrades honestly when a dependency is stopped - with no exporter
+      and no Prometheus, `/api/health` reported `data_source: unavailable`
+      with the cause, and showed no numbers
+
+Full-stack only, still to confirm on a machine with the exporter installed:
 
 - [ ] windows_exporter service running, metrics on :9182
 - [ ] Prometheus `windows` target UP
-- [ ] `/api/health` -> healthy, data_source real-time
-- [ ] Live metrics match Task Manager
-- [ ] Samples accumulating in MongoDB
-- [ ] K-Means returns Low / Medium / High with ordered centroids
-- [ ] Linear Regression returns clamped predictions with R2
-- [ ] Threshold alert fires, and cooldown suppresses duplicates
-- [ ] `threshold.py` imports nothing from `ml/`
-- [ ] All four app tabs render live data
-- [ ] System degrades honestly when a dependency is stopped

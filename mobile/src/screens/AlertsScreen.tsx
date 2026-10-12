@@ -38,6 +38,7 @@ function timeAgo(ts: number): string {
 export function AlertsScreen() {
   const alerts = usePolling(() => api.alerts(50), 10000);
   const config = usePolling(api.alertConfig, 0);
+  const health = usePolling(api.health, 30000);
 
   const [draft, setDraft] = useState<Record<string, Record<string, string>>>({});
   const [saving, setSaving] = useState(false);
@@ -79,6 +80,8 @@ export function AlertsScreen() {
   }
 
   const list: any[] = alerts.data?.alerts ?? [];
+  // Name the store actually in use (MongoDB, or the local SQLite fallback).
+  const storeName = health.data?.mongodb?.backend === 'sqlite' ? 'SQLite' : 'MongoDB';
   const critical = list.filter((a) => a.severity === 'critical').length;
   const warning = list.filter((a) => a.severity === 'warning').length;
 
@@ -101,7 +104,7 @@ export function AlertsScreen() {
 
       {/* ------------- Threshold configuration ------------- */}
       <Card index={0}>
-        <CardTitle hint="stored in MongoDB">Alert Thresholds</CardTitle>
+        <CardTitle hint={`stored in ${storeName}`}>Alert Thresholds</CardTitle>
 
         <View style={styles.headRow}>
           <Text style={[styles.headCell, { flex: 1 }]}>Metric</Text>

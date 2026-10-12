@@ -7,6 +7,11 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
+# ---- Local runtime data (SQLite fallback store) ----
+*.db
+*.db-shm
+*.db-wal
+
 # ---- Secrets / local config ----
 .env
 .env.local

@@ -2,7 +2,7 @@
  * Compact time-series line chart (react-native-svg).
  * Supports an optional dashed "forecast" series for Linear Regression output.
  */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';
 
@@ -50,6 +50,13 @@ export function LineChart({
     anim.start();
     return () => anim.stop();
   }, [seriesKey, reveal]);
+
+  // SVG ids are document-global: a fixed id makes every chart on a screen
+  // reuse the first one's gradient. Derive a stable unique id per instance.
+  const gradientId = useMemo(
+    () => `fill-${Math.random().toString(36).slice(2, 9)}`,
+    []
+  );
 
   const padL = 34;
   const padR = 8;
@@ -112,7 +119,7 @@ export function LineChart({
     <View>
       <Svg width={width} height={height}>
         <Defs>
-          <LinearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+          <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={color} stopOpacity="0.28" />
             <Stop offset="1" stopColor={color} stopOpacity="0.02" />
           </LinearGradient>
@@ -133,7 +140,7 @@ export function LineChart({
         {areaPath ? (
           <AnimatedPath
             d={areaPath}
-            fill="url(#fill)"
+            fill={`url(#${gradientId})`}
             opacity={reveal.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 0, 1] })}
           />
         ) : null}

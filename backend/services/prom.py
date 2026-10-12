@@ -192,5 +192,40 @@ class PrometheusClient:
         return info
 
 
+def _select_source():
+    """Pick the Module 1 data source.
+
+    METRICS_SOURCE=prometheus  always use windows_exporter -> Prometheus
+    METRICS_SOURCE=host        always read the host directly via psutil
+    METRICS_SOURCE=auto        use Prometheus when its exporter target is
+                               actually up, otherwise read the host (default)
+
+    Both paths report genuine live counters; `host` simply skips the exporter
+    and Prometheus, so it needs no Administrator install and no containers.
+    """
+    choice = str(getattr(Config, "METRICS_SOURCE", "auto")).lower()
+
+    if choice == "prometheus":
+        return PrometheusClient()
+
+    if choice != "host":
+        client = PrometheusClient()
+        try:
+            if client.target_up():
+                log.info("metrics source: prometheus (%s)", client.base_url)
+                return client
+        except PrometheusError as exc:
+            log.warning("Prometheus unusable (%s)", exc)
+        log.warning(
+            "windows_exporter target is not up - reading host metrics directly "
+            "via psutil instead (set METRICS_SOURCE=prometheus to force)"
+        )
+
+    from services.host import HostClient
+
+    log.info("metrics source: psutil (direct host counters)")
+    return HostClient()
+
+
 # Shared instance
-prom = PrometheusClient()
+prom = _select_source()

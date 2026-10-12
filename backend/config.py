@@ -19,6 +19,13 @@ class Config:
     MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
     MONGO_DB = os.getenv("MONGO_DB", "cloudpulse")
 
+    # Where Module 1 reads from: "auto" (Prometheus if its exporter target is
+    # up, else the host directly), "prometheus", or "host".
+    METRICS_SOURCE = os.getenv("METRICS_SOURCE", "auto").lower()
+
+    # Local store used when MONGO_URI is unreachable. Blank = backend/cloudpulse.db
+    SQLITE_PATH = os.getenv("SQLITE_PATH", "")
+
     # --- API --------------------------------------------------------------
     API_HOST = os.getenv("API_HOST", "0.0.0.0")
     API_PORT = _int("API_PORT", 5000)

@@ -32,6 +32,14 @@ export function OverviewScreen() {
   const m = metrics.data;
   const h = health.data;
   const live = h?.data_source === 'real-time';
+  // The backend reports which Module 1 source it chose, so the banner can name
+  // it rather than asserting Prometheus on a path that never touched it.
+  const viaHost = h?.prometheus?.source === 'psutil';
+  const sourceLabel = !live
+    ? 'METRICS UNAVAILABLE'
+    : viaHost
+      ? 'LIVE HOST METRICS'
+      : 'LIVE PROMETHEUS DATA';
 
   if (metrics.loading && !m) return <Loading label="Connecting to CloudPulse..." />;
 
@@ -51,7 +59,7 @@ export function OverviewScreen() {
       {/* Data-source honesty banner: states plainly whether metrics are real. */}
       <View style={styles.pillRow}>
         <StatusPill
-          label={live ? 'LIVE PROMETHEUS DATA' : 'EXPORTER OFFLINE'}
+          label={sourceLabel}
           color={live ? colors.green : colors.red}
           pulse={live}
         />

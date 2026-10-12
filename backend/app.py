@@ -42,7 +42,7 @@ def create_app() -> Flask:
     # report exactly what is wrong instead of the process dying silently.
     try:
         mongo.init()
-        log.info("MongoDB ready at %s", Config.MONGO_URI)
+        log.info("storage ready: %s", mongo.ping().get("uri"))
     except Exception as exc:  # noqa: BLE001
         log.warning("MongoDB unavailable at %s: %s", Config.MONGO_URI, exc)
 
