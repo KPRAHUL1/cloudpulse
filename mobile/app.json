@@ -18,7 +18,10 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.cloudpulse.app"
+      "package": "com.cloudpulse.app",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,6 +41,9 @@
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#F5F7FA"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c534fa0d-d407-4856-8316-b06834251fd7"
     }
   }
 }

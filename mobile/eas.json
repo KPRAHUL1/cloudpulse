@@ -9,7 +9,8 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
@@ -18,7 +19,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://cloudpulse-api-p0pd.onrender.com/api"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "distribution": "store",
@@ -27,7 +29,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://cloudpulse-api-p0pd.onrender.com/api"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {
