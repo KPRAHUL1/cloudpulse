@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CloudPulse app icon - source of truth.
+
+  The "CP" monogram and the pulse trace are drawn as stroked paths rather than
+  SVG <text>, so neither the PNG rasteriser nor react-native-svg needs a font
+  to be installed to render them identically. Regenerate the PNGs that Expo
+  consumes with `npm run build:icons`.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E7490"/>
+      <stop offset="0.55" stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#6D28D9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tile -->
+  <rect width="512" height="512" rx="116" fill="url(#tile)"/>
+
+  <!-- Faint cloud backdrop, for the "cloud" half of the name -->
+  <g fill="#FFFFFF" opacity="0.14">
+    <path d="M150 300a56 56 0 0 1 10-111 82 82 0 0 1 152-22 66 66 0 0 1 50 133z"/>
+  </g>
+
+  <!-- CP monogram -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round">
+    <!-- C: circle arc left open on the right -->
+    <path d="M255.6 147.3A74 74 0 1 0 255.6 260.7"/>
+    <!-- P: stem plus bowl -->
+    <path d="M308 130V286"/>
+    <path d="M308 130h26a40 40 0 0 1 0 80h-26"/>
+  </g>
+
+  <!-- Pulse / ECG trace -->
+  <path d="M112 352h52l28-38 30 76 28-56 28 18h122"
+        fill="none" stroke="#FFFFFF" stroke-width="22"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

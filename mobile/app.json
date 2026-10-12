@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "CloudPulse",
+    "slug": "cloudpulse",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cloudpulse.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1D4ED8",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.cloudpulse.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-status-bar",
+      "expo-dev-client"
+    ],
+    "backgroundColor": "#F5F7FA",
+    "owner": "kprahul143",
+    "extra": {
+      "eas": {
+        "projectId": "c534fa0d-d407-4856-8316-b06834251fd7"
+      }
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F7FA"
+    }
+  }
+}
