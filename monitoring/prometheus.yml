@@ -1,0 +1,24 @@
+# CloudPulse - Prometheus scrape configuration
+# Scrapes real host metrics from windows_exporter running natively on the
+# Windows host. windows_exporter MUST run on the host (not in a container)
+# because a container cannot read the host's real CPU/disk/network counters.
+
+global:
+  scrape_interval: 10s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: cloudpulse
+
+scrape_configs:
+  # Prometheus scraping itself - used by /api/health to prove Prometheus is live
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # The real monitoring target: the Windows host this project runs on.
+  # host.docker.internal resolves to the host machine from inside the container.
+  - job_name: windows
+    static_configs:
+      - targets: ['host.docker.internal:9182']
+        labels:
+          instance: local-windows-host

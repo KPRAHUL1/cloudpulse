@@ -1,0 +1,45 @@
+# ---- Python / backend ----
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ---- Secrets / local config ----
+.env
+.env.local
+*.env.local
+# .env.example IS tracked on purpose
+
+# ---- Node / mobile ----
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+*.tsbuildinfo
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.metro-health-check*
+
+# ---- Native build output / signing ----
+/mobile/ios
+/mobile/android
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# ---- Leftover scaffold git dir (not a real repo) ----
+.git-scaffold-disabled/
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db

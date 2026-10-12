@@ -1,0 +1,35 @@
+# CloudPulse - Prometheus + MongoDB infrastructure
+# Usage:  docker compose up -d
+# Stop:   docker compose down          (keeps data)
+# Reset:  docker compose down -v       (deletes stored metrics + database)
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: cloudpulse-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: cloudpulse-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  mongo_data:

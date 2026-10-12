@@ -1,0 +1,11 @@
+# CloudPulse backend - Python 3.13 compatible
+Flask==3.1.0
+flask-cors==5.0.0
+requests==2.32.3
+pymongo==4.10.1
+python-dotenv==1.0.1
+
+# Data processing + Machine Learning (spec: Scikit-learn, Pandas, NumPy)
+numpy==2.2.1
+pandas==2.2.3
+scikit-learn==1.6.1
