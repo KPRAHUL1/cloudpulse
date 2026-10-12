@@ -5,14 +5,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  LayoutChangeEvent,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressScale } from './src/components/anim';
 import { Logo } from './src/components/Logo';
@@ -32,6 +26,23 @@ const TABS: { key: string; label: string; icon: IconName; render: () => React.Re
 ];
 
 export default function App() {
+  // SafeAreaProvider has to sit above anything that reads insets.
+  return (
+    <SafeAreaProvider>
+      <AppShell />
+    </SafeAreaProvider>
+  );
+}
+
+function AppShell() {
+  /**
+   * Android draws edge-to-edge by default from Expo SDK 54 on, so the tab bar
+   * would otherwise sit underneath the gesture bar / navigation buttons.
+   * React Native's own SafeAreaView is iOS-only and does nothing here, hence
+   * the real insets.
+   */
+  const insets = useSafeAreaInsets();
+
   const [active, setActive] = useState(TABS[0].key);
   const [barWidth, setBarWidth] = useState(0);
 
@@ -66,17 +77,25 @@ export default function App() {
   const tabWidth = barWidth / TABS.length;
 
   return (
-    <SafeAreaView style={styles.root}>
+    <View style={styles.root}>
       <StatusBar style="dark" />
 
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Logo subtitle="Real-time resource monitoring" />
       </View>
 
       <Animated.View style={[styles.body, { opacity: fade }]}>{current.render()}</Animated.View>
 
       <View
-        style={styles.tabBar}
+        style={[
+          styles.tabBar,
+          {
+            // Lift the bar clear of the system navigation area.
+            paddingBottom: spacing.md + insets.bottom,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+          },
+        ]}
         onLayout={(e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width)}
       >
         {barWidth > 0 ? (
@@ -86,6 +105,9 @@ export default function App() {
               styles.indicator,
               {
                 width: tabWidth - spacing.lg,
+                // Matches the bar's own padding so the pill hugs the icons
+                // rather than stretching down into the inset.
+                bottom: spacing.sm + insets.bottom,
                 transform: [
                   {
                     translateX: slide.interpolate({
@@ -123,7 +145,7 @@ export default function App() {
           );
         })}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -131,7 +153,6 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   header: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
     paddingBottom: spacing.md,
   },
   body: { flex: 1 },
@@ -141,13 +162,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
     ...elevation.raised,
   },
   indicator: {
     position: 'absolute',
     top: spacing.xs,
-    bottom: spacing.sm,
     left: 0,
     marginHorizontal: spacing.xs,
     borderRadius: radius.md,
