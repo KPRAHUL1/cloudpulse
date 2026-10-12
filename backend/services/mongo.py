@@ -63,6 +63,14 @@ def get_db():
 def init() -> None:
     """Create indexes and seed defaults, or fall back to the local store."""
     global _fallback
+    if not str(Config.MONGO_URI).strip():
+        from services import sqlite_store
+
+        log.info("MONGO_URI is empty - using the local SQLite store")
+        _fallback = sqlite_store
+        sqlite_store.init()
+        return
+
     try:
         get_client().admin.command("ping")
     except PyMongoError as exc:

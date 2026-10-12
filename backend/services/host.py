@@ -15,6 +15,7 @@ routes do not care which one they were handed.
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any
 
@@ -47,11 +48,23 @@ class HostClient:
 
     @staticmethod
     def _normalise_volume(volume: str) -> str:
-        """Config holds e.g. 'C:'; psutil.disk_usage needs a real path."""
-        v = (volume or "C:").strip().strip('"')
+        """Turn the configured volume into a path psutil.disk_usage accepts.
+
+        Config holds a Windows volume like 'C:' by default, but the same code
+        runs on Linux when deployed, where that is meaningless - fall back to
+        the root filesystem there.
+        """
+        v = (volume or "").strip().strip('"')
+        if os.name != "nt":
+            # 'C:' or 'C:' carries no meaning on Linux; use the mount root.
+            if not v or (len(v) <= 3 and ":" in v):
+                return "/"
+            return v
+        if not v:
+            return "C:\\"
         if len(v) == 2 and v.endswith(":"):
             return v + "\\"
-        return v or "C:\\"
+        return v
 
     def _prime_cpu(self) -> None:
         times = psutil.cpu_times()

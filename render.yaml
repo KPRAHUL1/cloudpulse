@@ -1,0 +1,38 @@
+# Render blueprint - deploys the CloudPulse backend as a free web service.
+#
+# In this configuration CloudPulse monitors the container it runs in, so the
+# dashboard shows that host's real Linux CPU / memory / disk. It is the same
+# code path used locally, just pointed at a different machine.
+#
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo.
+services:
+  - type: web
+    name: cloudpulse-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # One worker only: each worker would otherwise start its own collector
+    # thread and sample the same host several times over.
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT app:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.1"
+      # Read the host directly - there is no windows_exporter or Prometheus here.
+      - key: METRICS_SOURCE
+        value: host
+      # Linux root filesystem rather than a Windows volume.
+      - key: DISK_VOLUME
+        value: /
+      # Blank means "no MongoDB": the backend uses its SQLite store instead of
+      # waiting out a connection timeout on every boot.
+      - key: MONGO_URI
+        value: ""
+      # Render's free tier idles the service after inactivity and restarts it
+      # with a clean filesystem, so stored samples do not survive. Sampling
+      # every 5s rebuilds the 30 samples K-Means needs in about 2.5 minutes.
+      - key: COLLECT_INTERVAL_SECONDS
+        value: "5"
+      - key: BACKFILL_MINUTES
+        value: "0"

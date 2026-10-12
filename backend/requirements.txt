@@ -10,3 +10,4 @@ numpy==2.2.1
 pandas==2.2.3
 scikit-learn==1.6.1
 psutil>=6.0
+gunicorn>=23.0
